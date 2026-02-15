@@ -16,6 +16,47 @@
     name: zsh
     state: present
 
+# Ensure locale is generated (prevents "cannot change locale" warnings)
+- name: Ensure locales package is installed (Debian/Ubuntu)
+  when: ansible_facts["os_family"] == "Debian"
+  become: true
+  tags: [sudo]
+  ansible.builtin.apt:
+    name: locales
+    state: present
+
+- name: Generate en_US.UTF-8 locale (Debian/Ubuntu)
+  when: ansible_facts["os_family"] == "Debian"
+  become: true
+  tags: [sudo]
+  ansible.builtin.command: locale-gen en_US.UTF-8
+  register: locale_gen
+  changed_when: "'Generation complete' in locale_gen.stdout"
+
+# Set zsh as default shell
+- name: Check current login shell
+  ansible.builtin.shell: echo $SHELL
+  args:
+    executable: /bin/sh
+  register: current_shell
+  changed_when: false
+
+- name: Set zsh as default shell (Debian/Ubuntu)
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - "'/zsh' not in current_shell.stdout"
+  become: true
+  tags: [sudo]
+  ansible.builtin.command: "chsh -s /usr/bin/zsh {{ ansible_facts['env']['USER'] }}"
+  changed_when: true
+
+- name: Set zsh as default shell (macOS)
+  when:
+    - ansible_facts["os_family"] == "Darwin"
+    - "'/zsh' not in current_shell.stdout"
+  ansible.builtin.command: "chsh -s /bin/zsh"
+  changed_when: true
+
 # Install oh-my-zsh (manual installation)
 - name: Check if oh-my-zsh is installed
   ansible.builtin.stat:

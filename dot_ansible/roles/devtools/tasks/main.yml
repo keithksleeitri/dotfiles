@@ -345,6 +345,22 @@
   changed_when: false
   failed_when: false
 
+- name: Find npm via mise for system-level npm tasks
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - tldr_check.rc != 0
+  ansible.builtin.shell: |
+    if [ -x "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise" ]; then
+      {{ ansible_facts['env']['HOME'] }}/.local/bin/mise which npm 2>/dev/null
+    elif command -v mise >/dev/null 2>&1; then
+      mise which npm 2>/dev/null
+    fi
+  args:
+    executable: /bin/bash
+  register: devtools_mise_npm
+  changed_when: false
+  failed_when: false
+
 - name: Install tldr via npm (Debian/Ubuntu, system-level)
   when:
     - ansible_facts["os_family"] == "Debian"
@@ -355,6 +371,7 @@
     name: tldr
     global: true
     state: present
+    executable: "{{ devtools_mise_npm.stdout | trim if devtools_mise_npm.stdout | default('') | trim != '' else omit }}"
   ignore_errors: true
 
 # --- tldr (user-level fallback) ---

@@ -4,6 +4,21 @@
   hosts: local
   gather_facts: true
 
+  pre_tasks:
+    - name: Wait for apt lock to be released
+      become: true
+      tags: [sudo, base, zsh, neovim, devtools, docker, nerdfonts]
+      ansible.builtin.shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for apt lock (held by another process)..."
+          sleep 5
+        done
+      args:
+        executable: /bin/bash
+      changed_when: false
+      register: apt_lock_wait
+      timeout: 300
+
   roles:
     - role: base
       tags: [base]

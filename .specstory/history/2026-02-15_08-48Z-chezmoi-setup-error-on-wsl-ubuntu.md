@@ -4421,3 +4421,49 @@ The full playbook passes cleanly now with **0 failures**. Here's a summary of al
 
 ---
 
+_**User**_
+
+I tried `chezmoi apply` with sudo
+
+```
+TASK [devtools : Install unzip if not present] **********************************************************************
+fatal: [localhost]: FAILED! => {"cache_update_time": 1771158114, "cache_updated": false, "changed": false, "msg": "'/usr/bin/apt-get -y -o \"Dpkg::Options::=--force-confdef\" -o \"Dpkg::Options::=--force-confold\"       install 'unzip=6.0-26ubuntu3.2'' failed: E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 99376 (unattended-upgr)\nE: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?\n", "rc": 100, "stderr": "E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 99376 (unattended-upgr)\nE: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?\n", "stderr_lines": ["E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 99376 (unattended-upgr)", "E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?"], "stdout": "", "stdout_lines": []}
+```
+
+```
+TASK [devtools : Install tldr via npm (Debian/Ubuntu, system-level)] ************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "msg": "Failed to find required executable \"npm\" in paths: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"}
+```
+I tried 
+
+```
+$ npm
+internal/modules/cjs/loader.js:883
+  throw err;
+  ^
+
+Error: Cannot find module '\\wsl.localhost\Ubuntu\mnt\c\Program Files\nodejs\node_modules\npm\bin\npm-cli.js'
+    at Function.Module._resolveFilename (internal/modules/cjs/loader.js:880:15)
+    at Function.Module._load (internal/modules/cjs/loader.js:725:27)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+$ which npm
+/mnt/c/Program Files/nodejs/npm
+```
+
+Seems there are some bugs (it somehow got Windows's npm?)
+
+```
+$ zsh
+/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+```
+
+And it didn't change shell to zsh?
+(I have to manually switch to zsh and got warning)
+
+---
+
