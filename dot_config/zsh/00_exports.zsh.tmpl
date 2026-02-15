@@ -20,6 +20,9 @@ export LC_ALL="en_US.UTF-8"
 # ~/bin for custom scripts, ~/.local/bin for auto-installed tools (uv, npm, cargo)
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 
+# Snap packages (Linux only - needed for snap-installed tools like neovim)
+[[ -d /snap/bin ]] && export PATH="/snap/bin:$PATH"
+
 # =============================================================================
 # Homebrew Setup
 # =============================================================================
