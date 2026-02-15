@@ -16,7 +16,7 @@
     mise_bin: "{{ mise_user_install.stat.exists | ternary(ansible_facts['env']['HOME'] + '/.local/bin/mise', '/opt/homebrew/bin/mise' if ansible_facts['os_family'] == 'Darwin' else '/usr/local/bin/mise') }}"
 
 - name: Install Rust via mise
-  ansible.builtin.command: "{{ mise_bin }} install rust@latest"
+  ansible.builtin.command: "{{ mise_bin }} install rust@latest --yes"
   args:
     creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/installs/rust"
   environment:
@@ -27,14 +27,14 @@
 # =============================================================================
 
 - name: Install Cargo CLI tools via cargo install
-  ansible.builtin.command: cargo install {{ item.name }}
+  ansible.builtin.command: "{{ mise_bin }} exec -- cargo install {{ item.name }}"
   args:
     creates: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/{{ item.binary }}"
   loop: "{{ cargo_tools }}"
   loop_control:
     label: "{{ item.name }}"
   environment:
-    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
 
 # =============================================================================
 # Pueue - macOS (via Homebrew)
@@ -52,11 +52,11 @@
 
 - name: Install pueue via cargo (Debian/Ubuntu)
   when: ansible_facts["os_family"] == "Debian"
-  ansible.builtin.command: cargo install pueue --locked
+  ansible.builtin.command: "{{ mise_bin }} exec -- cargo install pueue --locked"
   args:
     creates: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/pueue"
   environment:
-    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
 
 # =============================================================================
 # Pueue version checks (warn by default, optional strict enforcement)

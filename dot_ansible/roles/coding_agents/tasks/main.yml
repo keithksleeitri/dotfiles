@@ -133,8 +133,31 @@
 
 # === GitHub Copilot CLI ===
 
+- name: Find npm via mise (preferred on Linux)
+  when: ansible_facts["os_family"] == "Debian"
+  ansible.builtin.shell: |
+    if [ -x "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise" ]; then
+      {{ ansible_facts['env']['HOME'] }}/.local/bin/mise which npm 2>/dev/null
+    elif command -v mise >/dev/null 2>&1; then
+      mise which npm 2>/dev/null
+    fi
+  args:
+    executable: /bin/bash
+  register: mise_npm_path
+  changed_when: false
+  failed_when: false
+
+- name: Set npm executable path
+  ansible.builtin.set_fact:
+    npm_executable: >-
+      {{
+        mise_npm_path.stdout | trim
+        if (ansible_facts['os_family'] == 'Debian' and mise_npm_path.stdout | default('') | trim != '')
+        else ''
+      }}
+
 - name: Check if npm is available
-  ansible.builtin.command: which npm
+  ansible.builtin.command: "{{ npm_executable if npm_executable != '' else 'npm' }} --version"
   register: npm_check
   changed_when: false
   failed_when: false
@@ -154,6 +177,7 @@
     name: "@githubnext/github-copilot-cli"
     global: true
     state: present
+    executable: "{{ npm_executable if npm_executable != '' else omit }}"
   ignore_errors: true
 
 # === OpenAI Codex CLI ===
@@ -190,7 +214,7 @@
   when:
     - ansible_facts["os_family"] == "Debian"
     - npm_check.rc == 0
-  ansible.builtin.command: npm list -g --depth=0 @openai/codex
+  ansible.builtin.command: "{{ npm_executable if npm_executable != '' else 'npm' }} list -g --depth=0 @openai/codex"
   register: codex_linux_npm_check
   changed_when: false
   failed_when: false
@@ -204,6 +228,7 @@
     name: "@openai/codex"
     global: true
     state: present
+    executable: "{{ npm_executable if npm_executable != '' else omit }}"
 
 # === Gemini CLI ===
 
@@ -260,6 +285,7 @@
     name: "@google/gemini-cli"
     global: true
     state: present
+    executable: "{{ npm_executable if npm_executable != '' else omit }}"
   ignore_errors: true
 
 # === SpecStory ===
@@ -1036,6 +1062,7 @@
     name: "@openchamber/web"
     global: true
     state: present
+    executable: "{{ npm_executable if npm_executable != '' else omit }}"
   ignore_errors: true
 
 # === Happy ===
@@ -1055,4 +1082,5 @@
     name: happy-coder
     global: true
     state: present
+    executable: "{{ npm_executable if npm_executable != '' else omit }}"
   ignore_errors: true
